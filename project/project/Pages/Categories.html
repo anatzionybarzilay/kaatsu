@@ -1,0 +1,240 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="../Scripts/jquery-3.4.1.min.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <script src="../Scripts/bootstrap.min.js"></script>
+    <script src="../Scripts/bootstrap.js"></script>
+    <link href="CSS/Categorycss.css" rel="stylesheet" />
+
+
+    <script>
+
+        $(document).ready(function () {
+            $("#editDiv").hide();
+            $("#newCategory").click(addCategory);
+            $('#Manger').click(addContent);
+            ajaxCall("GET", "../api/category", "", getSuccess, error);
+            $('#buttonUpload').on('click', uploadPhoto);
+            $("#saveBTN").click(postCategory);
+        });
+
+        function addContent() {
+            window.location = "ManegerPage.html"
+        }
+
+        function getSuccess(categories) {
+            for (var i = 0; i < categories.length; i++) {
+                categories[i].PhotoPath = "<img class='imageRS' src='../" + categories[i].PhotoPath + "'/>";
+            }
+            try {
+                tbl = $('#categoriesTable').DataTable({
+                    data: categories,
+                    pageLength: 5,
+                    columns: [
+                        {
+
+                            render: function (data, type, row, meta) {
+                                let dataCategory = "data-cattId='" + row.Id + "'";
+                                //editBtn = "<button type='button' class = 'editBtn btn btn-success' " + categories + "> ערוך </button>";
+                                //deleteBtn = "<button type='button' class = 'deleteBtn btn btn-danger' " + categories + "> מחק </button>";
+                                editBtn = " ";
+                                deleteBtn = " ";
+                                return editBtn + deleteBtn;
+                            }
+                        },
+
+                        { data: "CategoryCode" },
+                        { data: "CategoryName" },
+                        { data: "Description" },
+                        { data: "PhotoPath" },
+                    ],
+
+                });
+
+            }
+
+            catch (err) {
+                alert(err);
+            }
+        }
+
+        function error(err) {
+            swal("Error: " + err);
+        }
+
+
+        function addCategory() {
+            $("#editDiv").show();
+            $("#editDiv :input").prop("disabled", false);
+            $('#idVideo*').attr('disabled', true);
+
+            document.getElementById("nameCategory").value = ""
+            //document.getElementById("description").value = ""
+            //document.getElementById("idVideo").value = ""
+        }
+
+
+        var photoData = "";
+
+        //upload picture
+        function uploadPhoto() {
+
+            var data = new FormData();
+            var files = $("#photofiles").get(0).files;
+            console.log(files[0])
+            $("#categoryForm").prop("disabled", true);
+            // Add the uploaded file to the form data collection
+            if (files.length > 0) {
+                for (f = 0; f < files.length; f++) {
+                    data.append("photo", files[f]);
+                }
+                let namePic = $("#nameCategory").val();
+                data.append("name", namePic);
+
+                $.ajax({
+                    type: "POST",
+                    url: "../api/category/uploadPhoto",
+                    contentType: false,
+                    processData: false,
+                    data: data,
+                    success: showVideo,
+                    error: errorVideo
+                });
+
+            }
+
+            //return false
+        }
+
+
+        //upload picture success
+        function showVideo(data) {
+            console.log(data);
+            alert("התמונה התווספה בהצלחה!");
+            photoData = data[0];
+            $("#Mform").prop("disabled", false);
+        }
+
+        //upload picture error
+        function errorVideo(data) {
+            console.log(data);
+        }
+
+        function postCategory() {
+            if (photoData != "") {
+                categoryName = $("#nameCategory").val();
+                description = $("#CategoryDescription").val();
+                Photo = photoData;
+
+                let category = {
+                    CategoryName: categoryName,
+                    Description: description,
+                    PhotoPath: Photo
+                }
+
+
+                ajaxCall("POST", "../api/category", JSON.stringify(category), postSuccess, postError)
+
+                return false;
+            }
+            else
+                alert("לא נבחרה תמונה לקטגוריה!")
+        }
+
+
+        function postSuccess(data) {
+            alert("הקטגוריה : " + data + " התווספה בהצלחה!")
+        }
+
+        function postError(err) {
+            console.log(err.responseJSON.Message);
+            alert("קרתה שגיאה בהעלאת הקטגוריה החדשה");
+        }
+
+    </script>
+
+</head>
+<body>
+    <!--<video controls="controls">
+        <source src="../%d7%94%d7%aa%d7%90%d7%9e%d7%aa%20%d7%a8%d7%a6%d7%95%d7%a2%d7%95%d7%aa%20%d7%94%d7%99%d7%93%d7%99%d7%99%d7%9d%20%d7%a9%d7%9c%20kaatsu.mp4" type="video/mp4" />
+    </video>-->
+
+    <div class="row">
+        <br />
+        <div class="col-sm-2">
+            <button id="Manger" class="button">חזרה למסך מנהל</button>
+        </div>
+
+        <div class="col-sm-10">
+            <img class="LogoImage" src="../imgesFileProject/WhatsApp_Image_2021-02-25_at_11.52.43-removebg-preview.png" />
+        </div>
+    </div>
+    <div class="upload"><span>קטגוריות</span></div>
+    <hr />
+
+    <div class="container" id="formCamp">
+        <form id="Mform">
+            <table id="categoriesTable" class="display nowrap" style="width:100%">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>קוד קטגוריה</th>
+                        <th>שם קטגוריה</th>
+                        <th>תיאור</th>
+                        <th>תמונת קטגוריה</th>
+                    </tr>
+                </thead>
+            </table>
+        </form>
+
+        <br /> <br />
+        <button type="submit" class="addCategoryButton" id="newCategory">הוסף קטגוריה חדשה</button><br />
+        <div id="editDiv">
+            <form id="categoryForm">
+                <div class="form-group row">
+
+                    <div class="form-group col-sm-4">
+                        <label for="discountCodeTB"><span class="red-star">★ </span>הוספת תמונה</label>
+                        <!--accept="video/*"    אמור להיכנס שורה מתחת-->
+                        <input type="file" id="photofiles" name="files" multiple="multiple" />
+                        <button type="button" class="buttonUpL" id="buttonUpload">העלה תמונה</button>
+                        <div id="ph1"></div>
+                    </div>
+
+                    <div class="form-group col-sm-3">
+                        <label for="description">תיאור סרטון</label>
+                        <textarea rows="6" class="form-control" id="CategoryDescription" placeholder="הכנס תיאור קצר לקטגוריה"></textarea>
+                    </div>
+
+
+                    <div class="form-group col-sm-3">
+                        <label for="model"><span class="red-star">★ </span>שם קטגוריה</label>
+                        <input type="text" class="form-control" id="nameCategory" placeholder="הכנס שם קטגוריה" required>
+                    </div>
+
+                    <div class="form-group col-sm-2">
+
+                    </div>
+
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" id="saveBTN">שמור</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
